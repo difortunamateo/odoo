@@ -9,7 +9,7 @@ services:
       - "8069:8069"
     volumes:
       - odoo_data:/var/lib/odoo
-      - ./custom_addons:/mnt/custom_addons  # Ruta correcta para módulos personalizados
+      - ./custom_addons:/mnt/custom_addons  # Ruta para módulos personalizados
       - ./config:/etc/odoo  # Para un archivo de configuración personalizado
     environment:
       - HOST=db
