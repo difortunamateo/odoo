@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="payment_dlocal_method_form" inherit_id="payment.method_form">
+        <input name="o_payment_radio" position="attributes">
+            <attribute name="t-att-data-dlocal-inline-form-values">
+                provider_sudo._dlocal_get_inline_form_values(currency)
+            </attribute>
+            <attribute name="t-att-data-dlocal-color">
+                "green"
+            </attribute>
+        </input>
+    </template>
+
+    <template id="payment_submit_button_inherit_dlocal" inherit_id="payment.submit_button">
+        <button name="o_payment_submit_button" position="before">
+            <div
+                id="o_dlocal_button_container" name="o_payment_submit_button" data-is-dlocal="true"
+            >
+                <div id="o_dlocal_enabled_button" class="d-none"/>
+                <div id="o_dlocal_disabled_button"/>
+            </div>
+            <div id="o_dlocal_loading" class="d-flex justify-content-center d-none">
+                <div class="spinner-border"/>
+            </div>
+        </button>
+    </template>
+
+</odoo>

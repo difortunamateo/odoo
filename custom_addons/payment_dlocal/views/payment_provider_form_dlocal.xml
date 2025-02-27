@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="payment_provider_form_dlocal" model="ir.ui.view">
+        <field name="name">DLocal Provider Form</field>
+        <field name="model">payment.provider</field>
+        <field name="inherit_id" ref="payment.payment_provider_form"/>
+        <field name="arch" type="xml">
+            <group name="provider_credentials" position="inside">
+                <group invisible="code != 'dlocal'">
+                    <!-- API Key -->
+                    <field
+                        name="dlocal_api_key"
+                        string="API Key"
+                        required="code == 'dlocal' and state != 'disabled'"
+                    />
+                    <!-- Secret Key -->
+                    <field
+                        name="dlocal_secret_key"
+                        string="Secret Key"
+                        password="True"
+                        required="code == 'dlocal' and state != 'disabled'"
+                    />
+                    <!-- Endpoint -->
+                    <field
+                        name="dlocal_endpoint"
+                        string="API Endpoint"
+                        required="code == 'dlocal' and state != 'disabled'"
+                    />
+                    <widget
+                        name="documentation_link"
+                        path="/applications/finance/payment_providers/dlocal.html"
+                        label="How to configure your DLocal account?"
+                        colspan="2"
+                    />
+                </group>
+            </group>
+        </field>
+    </record>
+
+</odoo>

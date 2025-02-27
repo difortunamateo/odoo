@@ -4,15 +4,12 @@ import json
 
 class PaymentProviderDLocal(models.Model):
     _inherit = "payment.provider"
-
-    # Agregar el código de selección "dlocal" a los métodos de pago
-    code = fields.Selection(
-        selection_add=[('dlocal', "dLocal")], ondelete={'dlocal': 'set default'}
-    )
     
-    # Agregar los campos necesarios para la integración con dLocal
+    code = fields.Selection([('dlocal', 'dLocal')], required=True, default='dlocal')
+
+    # Campos específicos para dLocal
     dlocal_api_key = fields.Char(string="API Key")
-    dlocal_secret_key = fields.Char(string="Secret Key")
+    dlocal_secret_key = fields.Char(string="Secret Key", password=True)
     dlocal_endpoint = fields.Char(string="API Endpoint", required=True)
 
     def get_api_credentials(self):

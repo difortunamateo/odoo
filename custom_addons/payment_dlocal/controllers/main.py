@@ -20,8 +20,8 @@ class DLocalController(http.Controller):
             _logger.error("Missing reference or status in the notification: reference=%s, status=%s", reference, status)
             return {'status': 'error', 'message': 'Invalid notification data'}
 
-        # Buscar la transacción correspondiente
-        transaction = request.env['payment.transaction.dlocal'].sudo().search([('reference', '=', reference)], limit=1)
+        # Buscar la transacción correspondiente en el nuevo modelo
+        transaction = request.env['payment.transaction.dlocal'].sudo().search([('dlocal_reference', '=', reference)], limit=1)
 
         if not transaction:
             _logger.error("Transaction not found for reference: %s", reference)
