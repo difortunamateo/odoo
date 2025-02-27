@@ -2,27 +2,27 @@
 <odoo>
     <!-- Vista de formulario para dLocal -->
     <record id="view_payment_form_dlocal" model="ir.ui.view">
-        <field name="name">payment.form.dlocal</field>
-        <field name="model">payment.dlocal</field>
-        <field name="arch" type="xml">
-            <form string="dLocal Payment Configuration">
-                <sheet>
-                    <group>
-                        <field name="name"/>
-                        <field name="provider"/>
-                        <field name="dlocal_api_key"/>
-                        <field name="dlocal_secret_key"/>
-                        <field name="dlocal_endpoint"/>
-                    </group>
-                </sheet>
-            </form>
-        </field>
+    <field name="name">payment.form.dlocal</field>
+    <field name="model">payment.provider</field> <!-- Asegurarse de que este modelo sea el correcto -->
+    <field name="arch" type="xml">
+        <form string="dLocal Payment Configuration">
+            <sheet>
+                <group>
+                    <field name="name"/>
+                    <field name="code" widget="selection"/>
+                    <field name="dlocal_api_key" string="API Key"/>
+                    <field name="dlocal_secret_key" string="Secret Key"/>
+                    <field name="dlocal_endpoint" string="API Endpoint" required="1"/>
+                </group>
+            </sheet>
+        </form>
+    </field>
     </record>
 
     <!-- Acción para abrir la vista de formulario -->
     <record id="action_payment_dlocal" model="ir.actions.act_window">
         <field name="name">dLocal Payments</field>
-        <field name="res_model">payment.dlocal</field>
+        <field name="res_model">payment.provider</field>  <!-- Cambiado de payment.dlocal a payment.provider -->
         <field name="view_mode">form</field>
         <field name="view_id" ref="view_payment_form_dlocal"/>
     </record>

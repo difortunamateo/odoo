@@ -1,13 +1,16 @@
-from odoo import models, fields, api
+from odoo import models, fields
 import requests
 import json
 
-class PaymentDLocal(models.Model):
-    _name = "payment.dlocal"
-    _description = "DLocal Payment Provider"
+class PaymentProviderDLocal(models.Model):
+    _inherit = "payment.provider"
 
-    name = fields.Char(string="Name", required=True)
-    provider = fields.Char(string="Provider", default="dLocal", readonly=True)
+    # Agregar el código de selección "dlocal" a los métodos de pago
+    code = fields.Selection(
+        selection_add=[('dlocal', "dLocal")], ondelete={'dlocal': 'set default'}
+    )
+    
+    # Agregar los campos necesarios para la integración con dLocal
     dlocal_api_key = fields.Char(string="API Key")
     dlocal_secret_key = fields.Char(string="Secret Key")
     dlocal_endpoint = fields.Char(string="API Endpoint", required=True)
@@ -58,24 +61,3 @@ class PaymentDLocal(models.Model):
             return response.json()
         except requests.exceptions.RequestException as e:
             raise ValueError(f"Error in payment request to dLocal: {e}")
-
-
-class PaymentTransactionDLocal(models.Model):
-    _name = 'payment.transaction.dlocal'
-    _description = 'Payment Transaction for dLocal'
-
-    reference = fields.Char(string='Payment Reference', required=True)
-    amount = fields.Float(string='Amount', required=True)
-    currency = fields.Char(string='Currency', required=True)
-    status = fields.Selection([('pending', 'Pending'), ('paid', 'Paid'), ('failed', 'Failed')], default='pending')
-    acquirer_id = fields.Many2one('payment.dlocal', string='Payment')
-    transaction_id = fields.Char(string='Transaction ID')
-
-    def update_status(self, new_status):
-        """ Update the transaction status """
-        if new_status not in ['pending', 'paid', 'failed']:
-            raise ValueError("Invalid status received.")
-        
-        for record in self:
-            record.status = new_status
-
