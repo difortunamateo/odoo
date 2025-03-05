@@ -4,26 +4,26 @@ import json
 
 class PaymentProviderDLocal(models.Model):
     _inherit = "payment.provider"
+    #_name = "payment.provider_dlocal"
     
-    code = fields.Selection([('dlocal', 'dLocal')], required=True, default='dlocal')
-
-    # Campos específicos para dLocal
-    dlocal_api_key = fields.Char(string="API Key")
-    dlocal_secret_key = fields.Char(string="Secret Key", password=True)
-    dlocal_endpoint = fields.Char(string="API Endpoint", required=True)
-
+    x_code = fields.Selection([('dlocal', 'dLocal')], required=True, default='dlocal')
+    
+    x_dlocal_api_key = fields.Char(string="API Key")
+    x_dlocal_secret_key = fields.Char(string="Secret Key", password=True)
+    x_dlocal_endpoint = fields.Char(string="API Endpoint", required=True)
+    
     def get_api_credentials(self):
         """ Retrieve API credentials securely from Odoo configuration. """
         Param = self.env['ir.config_parameter'].sudo()
         return {
-            'api_key': Param.get_param('dlocal.api_key', default=''),
-            'secret_key': Param.get_param('dlocal.secret_key', default='')
+            'dlocal_api_key': Param.get_param('dlocal.api_key', default=''),
+            'dlocal_secret_key': Param.get_param('dlocal.secret_key', default='')
         }
 
     def process_payment(self, values):
         """ Process payment with dLocal API """
         credentials = self.get_api_credentials()
-        if not credentials['api_key']:
+        if not credentials['dlocal_api_key']:
             raise ValueError("Missing dLocal API Key in system parameters.")
 
         # Validar campos requeridos
@@ -48,7 +48,7 @@ class PaymentProviderDLocal(models.Model):
         # Cabeceras de la solicitud
         headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {credentials['api_key']}"
+            "Authorization": f"Bearer {credentials['dlocal_api_key']}"
         }
 
         try:

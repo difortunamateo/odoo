@@ -2,17 +2,18 @@ from odoo import models, fields
 
 class PaymentTransactionDLocal(models.Model):
     _inherit = "payment.transaction"  # Extiende el modelo de transacciones estándar
+    #_name = "payment.transaction_dlocal"  # Reemplaza el nombre del modelo
 
     # Campos específicos de DLocal
-    dlocal_status = fields.Selection([
+    x_dlocal_status = fields.Selection([
         ('pending', 'Pending'),
         ('approved', 'Approved'),
         ('rejected', 'Rejected'),
         ('failed', 'Failed'),
     ], string="dLocal Status", default='pending')
 
-    dlocal_reference = fields.Char(string="dLocal Reference")
-    dlocal_payment_method = fields.Char(string="Payment Method")
+    x_dlocal_reference = fields.Char(string="dLocal Reference")
+    x_dlocal_payment_method = fields.Char(string="Payment Method")
 
     def update_status(self, status):
         """ Actualizar el estado de la transacción de acuerdo con el estado recibido desde DLocal. """

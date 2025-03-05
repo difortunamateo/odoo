@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <template id="payment_dlocal_method_form" inherit_id="payment.method_form">
+    <template id="payment_dlocal.method_form" inherit_id="payment.method_form">
         <input name="o_payment_radio" position="attributes">
             <attribute name="t-att-data-dlocal-inline-form-values">
                 provider_sudo._dlocal_get_inline_form_values(currency)

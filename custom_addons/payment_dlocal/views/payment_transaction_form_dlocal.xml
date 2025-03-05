@@ -9,16 +9,13 @@
             <field name="provider_reference" position="after">
                 <field name="dlocal_status"
                        readonly="1"
-                       invisible="provider_code != 'dlocal'"
-                       groups="base.group_no_one"/>
+                       invisible="provider_code != 'dlocal'"/>
                 <field name="dlocal_reference"
                        readonly="1"
-                       invisible="provider_code != 'dlocal'"
-                       groups="base.group_no_one"/>
+                       invisible="provider_code != 'dlocal'"/>
                 <field name="dlocal_payment_method"
                        readonly="1"
-                       invisible="provider_code != 'dlocal'"
-                       groups="base.group_no_one"/>
+                       invisible="provider_code != 'dlocal'"/>
             </field>
         </field>
     </record>

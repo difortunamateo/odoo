@@ -49,6 +49,9 @@ from odoo.osv import expression
 import typing
 from odoo.api import ContextType, DomainType, IdType, NewId, M, T
 
+import logging
+_logger = logging.getLogger(__name__)
+
 
 DATE_LENGTH = len(date.today().strftime(DATE_FORMAT))
 DATETIME_LENGTH = len(datetime.now().strftime(DATETIME_FORMAT))
@@ -2945,13 +2948,20 @@ class Selection(Field[str | typing.Literal[False]]):
             translated according to context language
         """
         selection = self.selection
+        _logger.debug("Selection: %s", selection)  # Depuración
+
         if isinstance(selection, str) or callable(selection):
-            return determine(selection, env[self.model_name])
+            result = determine(selection, env[self.model_name])
+            _logger.debug("Determine result: %s", result)  # Depuración
+            return result
 
         # translate selection labels
         if env.lang:
-            return env['ir.model.fields'].get_field_selection(self.model_name, self.name)
+            result = env['ir.model.fields'].get_field_selection(self.model_name, self.name)
+            _logger.debug("Field selection result: %s", result)  # Depuración
+            return result
         else:
+            _logger.debug("Returning selection without translation: %s", selection)  # Depuración
             return selection
 
     def _default_group_expand(self, records, groups, domain):

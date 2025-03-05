@@ -22,8 +22,7 @@ class PaymentProvider(models.Model):
     _inherit = 'payment.provider'
 
     code = fields.Selection(
-        selection_add=[('dlocal', "dLocal")],
-        ondelete={'dlocal': 'set default'}
+        selection_add=[('paypal', "PayPal")], ondelete={'paypal': 'set default'}
     )
     
     paypal_email_account = fields.Char(

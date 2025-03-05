@@ -1,1 +1,2 @@
-from . import payment_dlocal
+from .payment_provider_dlocal import PaymentProviderDLocal
+from .payment_transaction_dlocal import PaymentTransactionDLocal
