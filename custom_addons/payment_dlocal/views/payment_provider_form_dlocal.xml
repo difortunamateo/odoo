@@ -10,20 +10,20 @@
                 <group invisible="code != 'dlocal'">
                     <!-- API Key -->
                     <field
-                        name="dlocal_api_key"
+                        name="x_dlocal_api_key"
                         string="API Key"
                         required="code == 'dlocal' and state != 'disabled'"
                     />
                     <!-- Secret Key -->
                     <field
-                        name="dlocal_secret_key"
+                        name="x_dlocal_secret_key"
                         string="Secret Key"
                         password="True"
                         required="code == 'dlocal' and state != 'disabled'"
                     />
                     <!-- Endpoint -->
                     <field
-                        name="dlocal_endpoint"
+                        name="x_dlocal_endpoint"
                         string="API Endpoint"
                         required="code == 'dlocal' and state != 'disabled'"
                     />

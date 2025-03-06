@@ -6,7 +6,7 @@ class PaymentProviderDLocal(models.Model):
     _inherit = "payment.provider"
     #_name = "payment.provider_dlocal"
     
-    x_code = fields.Selection([('dlocal', 'dLocal')], required=True, default='dlocal')
+    code = fields.Selection([('dlocal', 'dLocal')], required=True, default='dlocal')
     
     x_dlocal_api_key = fields.Char(string="API Key")
     x_dlocal_secret_key = fields.Char(string="Secret Key", password=True)
