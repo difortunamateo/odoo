@@ -1,9 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <odoo>
-
     <template id="redirect_form">
-        <form t-att-action="api_url" method="post"/>
-    </template>
+        <form t-att-action="api_url" method="post" name="dlocal_form" id="dlocal_form">
+            <!-- Campos requeridos por dLocal -->
+            <input type="hidden" name="x_login" t-att-value="tx_values.get('x_login')"/>
+            <input type="hidden" name="x_amount" t-att-value="tx_values.get('x_amount')"/>
+            <input type="hidden" name="x_currency" t-att-value="tx_values.get('x_currency')"/>
+            <input type="hidden" name="x_reference" t-att-value="tx_values.get('x_reference')"/>
+            <input type="hidden" name="x_country" t-att-value="tx_values.get('x_country')"/>
+            <input type="hidden" name="x_email" t-att-value="tx_values.get('x_email')"/>
+            <input type="hidden" name="x_name" t-att-value="tx_values.get('x_name')"/>
+            <input type="hidden" name="x_return_url" t-att-value="tx_values.get('x_return_url')"/>
+            <input type="hidden" name="x_notify_url" t-att-value="tx_values.get('x_notify_url')"/>
+            <input type="hidden" name="x_signature" t-att-value="tx_values.get('x_signature')"/>
 
+
+            <div class="d-flex justify-content-center align-items-center" style="height: 100vh;">
+                <div class="text-center">
+                    <h2>Bernie, redirigiéndote a dLocal...</h2>
+                    <p>Por favor espera un momento.</p>
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="sr-only">Cargando...</span>
+                    </div>
+                </div>
+            </div>
+
+            <script>
+                document.addEventListener("DOMContentLoaded", function() {
+                    document.getElementById("dlocal_form").submit();
+                });
+            </script>
+        </form>
+    </template>
 </odoo>

@@ -1,3 +1,8 @@
+import hashlib
+import hmac
+
+from werkzeug import urls
+
 from odoo import models, fields
 import requests
 import json
@@ -11,7 +16,13 @@ class PaymentProviderDLocal(models.Model):
     x_dlocal_api_key = fields.Char(string="API Key")
     x_dlocal_secret_key = fields.Char(string="Secret Key")
     x_dlocal_endpoint = fields.Char(string="API Endpoint", required=True, default="")
-    
+
+    def _get_default_payment_method_id(self):
+        self.ensure_one()
+        if self.code != 'dlocal':
+            return super()._get_default_payment_method_id()
+        return self.env.ref('payment_dlocal.payment_method_dlocal').id
+
     def get_api_credentials(self):
         """ Retrieve API credentials securely from Odoo configuration. """
         Param = self.env['ir.config_parameter'].sudo()
@@ -76,8 +87,7 @@ class PaymentProviderDLocal(models.Model):
         return json.dumps(inline_form_values)
 
 class PaymentTransactionDLocal(models.Model):
-    _inherit = "payment.transaction"  # Extiende el modelo de transacciones estándar
-    #_name = "payment.transaction_dlocal"  # Reemplaza el nombre del modelo
+    _inherit = "payment.transaction"
 
     # Campos específicos de DLocal
     x_dlocal_status = fields.Selection([
@@ -96,72 +106,96 @@ class PaymentTransactionDLocal(models.Model):
             raise ValueError(f"Invalid status: {status}")
 
         self.dlocal_status = status
-    
+
     def _get_specific_rendering_values(self, processing_values):
         res = super()._get_specific_rendering_values(processing_values)
         if self.provider_code != 'dlocal':
             return res
 
-        # Initiate the payment and retrieve the payment link data.
-        #payload = self._dlocal_prepare_preference_request_payload()
-        #_logger.info(
-        ##    "Sending '/checkout/preferences' request for link creation:\n%s",
-        #    pprint.pformat(payload),
-        #)
-        #api_url = self.provider_id._mercado_pago_make_request(
-        #    '/checkout/preferences', payload=payload
-        #)['init_point' if self.provider_id.state == 'enabled' else 'sandbox_init_point']
+        # No se si acá no hay que cambiar para que no sea localhost, probarlo.
+        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
 
-        # Extract the payment link URL and params and embed them in the redirect form.
-        #parsed_url = urls.url_parse(api_url)
-        #url_params = urls.url_decode(parsed_url.query)
-        api_url = "https://api-sbx.dlocalgo.com/v1/payments"
-        rendering_values = {
-            'api_url': api_url,
-            # 'url_params': url_params,  # Encore the params as inputs to preserve them.
+        # Redirect a Dlocal
+        tx_values = {
+            'x_login': self.provider_id.x_dlocal_api_key,
+            'x_amount': processing_values['amount'],
+            'x_currency': self.currency_id.name,
+            'x_reference': self.reference,
+            'x_country': self.partner_country_id.code,
+            'x_email': self.partner_email,
+            'x_name': self.partner_name,
+            # URLs de retorno y notificación
+            'x_return_url': urls.url_join(base_url, '/payment/dlocal/return'),
+            'x_notify_url': urls.url_join(base_url, '/payment/dlocal/webhook'),
         }
-        return rendering_values
-    
-    def _dlocal_prepare_preference_request_payload(self):
-        base_url = self.provider_id.get_base_url()
-        return_url = urls.url_join(base_url, MercadoPagoController._return_url)
-        sanitized_reference = url_quote(self.reference)
-        webhook_url = urls.url_join(
-            base_url, f'{MercadoPagoController._webhook_url}/{sanitized_reference}'
-        )  # Append the reference to identify the transaction from the webhook notification data.
 
-        unit_price = self.amount
-        decimal_places = const.CURRENCY_DECIMALS.get(self.currency_id.name)
-        if decimal_places is not None:
-            unit_price = float_round(unit_price, decimal_places, rounding_method='DOWN')
+        # Firmamos
+        msg = f"{tx_values['x_login']}{tx_values['x_amount']}{tx_values['x_reference']}"
+        tx_values['x_signature'] = hmac.new(
+            self.provider_id.x_dlocal_secret_key.encode('utf-8'),
+            msg.encode('utf-8'),
+            hashlib.sha256
+        ).hexdigest()
+
+
+        api_url = f"{self.provider_id.x_dlocal_endpoint}/v1/payments"
 
         return {
-            'auto_return': 'all',
-            'back_urls': {
-                'success': return_url,
-                'pending': return_url,
-                'failure': return_url,
-            },
-            'external_reference': self.reference,
-            'items': [{
-                'title': self.reference,
-                'quantity': 1,
-                'currency_id': self.currency_id.name,
-                'unit_price': unit_price,
-            }],
-            'notification_url': webhook_url,
-            'payer': {
-                'name': self.partner_name,
-                'email': self.partner_email,
-                'phone': {
-                    'number': self.partner_phone,
-                },
-                'address': {
-                    'zip_code': self.partner_zip,
-                    'street_name': self.partner_address,
-                },
-            },
-            'payment_methods': {
-                'installments': 1,  # Prevent MP from proposing several installments for a payment.
-            },
+            'api_url': api_url,
+            'tx_values': tx_values,
         }
+
+    def _get_tx_from_feedback_data(self, provider_code, data):
+
+        tx = super()._get_tx_from_feedback_data(provider_code, data)
+        if provider_code != 'dlocal' or tx:
+            return tx
+
+        reference = data.get('order_id') or data.get('reference')
+        if not reference:
+            return False
+
+        tx = self.search([('reference', '=', reference), ('provider_code', '=', 'dlocal')])
+        return tx
+
+    def _process_feedback_data(self, data):
+
+        super()._process_feedback_data(data)
+        if self.provider_code != 'dlocal':
+            return
+
+        status = data.get('status')
+        tx_id = data.get('payment_id')
+
+        # Actualizar datos de la transacción
+        vals = {
+            'x_dlocal_reference': tx_id,
+            'x_dlocal_status': self._dlocal_map_status(status),
+            'x_dlocal_payment_method': data.get('payment_method_type', ''),
+            'provider_reference': tx_id,
+        }
+
+        self.write(vals)
+
+        # Actualizar el estado de la transacción en Odoo
+        if status == 'PAID' or status == 'AUTHORIZED':
+            self._set_done()
+        elif status == 'PENDING' or status == 'VERIFICATION':
+            self._set_pending()
+        elif status == 'REJECTED' or status == 'CANCELLED':
+            self._set_canceled()
+        else:
+            self._set_error("dLocal: " + data.get('status_detail', 'Unknown error'))
+
+    def _dlocal_map_status(self, status):
+        """ Mapper dlocal interno nuestro. """
+        mapping = {
+            'PAID': 'approved',
+            'AUTHORIZED': 'approved',
+            'PENDING': 'pending',
+            'VERIFICATION': 'pending',
+            'REJECTED': 'rejected',
+            'CANCELLED': 'rejected',
+            'ERROR': 'failed',
+        }
+        return mapping.get(status, 'pending')

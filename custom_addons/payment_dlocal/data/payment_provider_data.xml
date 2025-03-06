@@ -1,7 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo noupdate="1">
-    <record id="payment.payment_provider_dlocal" model="payment.provider">
-        <field name="code">dlocal</field>
-        <field name="redirect_form_view_id" ref="redirect_form"/>
-    </record>
+<!--    <record id="payment.payment_provider_dlocal" model="payment.provider">-->
+<!--        <field name="code">dlocal</field>-->
+<!--&lt;!&ndash;        <field name="redirect_form_view_id" ref="redirect_form"/>&ndash;&gt;-->
+<!--    </record>-->
+
+    <record id="payment_provider_dlocal" model="payment.provider">
+    <field name="name">dLocal</field>
+    <field name="code">dlocal</field>
+    <field name="redirect_form_view_id" ref="redirect_form"/>
+    <field name="company_id" ref="base.main_company"/>
+    <field name="state">disabled</field>
+    <!-- etc. -->
+</record>
 </odoo>
