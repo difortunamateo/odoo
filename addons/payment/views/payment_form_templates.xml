@@ -217,9 +217,10 @@
                     >
                         <span><i class="fa fa-lock"/> Secured by</span>
                         <span t-out="dict(provider_sudo._fields['code']._description_selection(
-                     provider_sudo.env
-                 )).get(provider_sudo.code, 'Desconocido')" class="text-break"/>
-
+                                         provider_sudo.env
+                                     ))[provider_sudo.code]"
+                              class="text-break"
+                        />
                     </p>
                 </div>
             </div>

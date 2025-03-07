@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<odoo noupdate="1">
+<odoo>
 <!--    <record id="payment.payment_provider_dlocal" model="payment.provider">-->
 <!--        <field name="code">dlocal</field>-->
 <!--&lt;!&ndash;        <field name="redirect_form_view_id" ref="redirect_form"/>&ndash;&gt;-->
