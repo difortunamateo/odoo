@@ -113,7 +113,8 @@ class PaymentTransactionDLocal(models.Model):
             return res
 
         # No se si acá no hay que cambiar para que no sea localhost, probarlo.
-        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+        #base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+        base_url = 'https://ffa8-190-64-48-74.ngrok-free.app'
 
         # Redirect a Dlocal
         tx_values = {
