@@ -1,11 +1,14 @@
 import hashlib
 import hmac
+import logging
 
 from werkzeug import urls
 
 from odoo import models, fields
 import requests
 import json
+
+_logger = logging.getLogger(__name__)
 
 class PaymentProviderDLocal(models.Model):
     _inherit = "payment.provider"
@@ -16,6 +19,41 @@ class PaymentProviderDLocal(models.Model):
     x_dlocal_api_key = fields.Char(string="API Key")
     x_dlocal_secret_key = fields.Char(string="Secret Key")
     x_dlocal_endpoint = fields.Char(string="API Endpoint", required=True, default="")
+
+    def _make_dlocal_request(self, endpoint, payload=None, method='POST'):
+        url = urls.url_join("https://api-sbx.dlocalgo.com/v1/payments", endpoint)
+        headers = {'Authorization': f'Bearer oLQmkrFljJzfuOvykjZUJSdZgeAUfitK:ywIZqyuVngPnXtOaG6u58dzqgEvNB97BOV7HZAzD'}
+        try:
+            if method == 'GET':
+                response = requests.get(url, params=payload, headers=headers, timeout=10)
+            else:
+                response = requests.post(url, json=payload, headers=headers, timeout=10)
+                try:
+                    response.raise_for_status()
+                except requests.exceptions.HTTPError:
+                    _logger.exception(
+                        "Invalid API request at %s with data:\n%s", url, pprint.pformat(payload),
+                    )
+                    try:
+                        response_content = response.json()
+                        error_code = response_content.get('error')
+                        error_message = response_content.get('message')
+                        raise ValidationError("Dlocal: " + _(
+                            "The communication with the API failed. Dlocal gave us the"
+                            " following information: '%(error_message)s' (code %(error_code)s)",
+                            error_message=error_message, error_code=error_code,
+                        ))
+                    except ValueError:  # The response can be empty when the access token is wrong.
+                        raise ValidationError("Dlocal: " + _(
+                            "The communication with the API failed. The response is empty. Please"
+                            " verify your access token."
+                        ))
+        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
+            _logger.exception("Unable to reach endpoint at %s", url)
+            raise ValidationError(
+                "Dlocal: " + _("Could not establish the connection to the API.")
+            )
+        return response.json()
 
     def _get_default_payment_method_id(self):
         self.ensure_one()
@@ -33,6 +71,7 @@ class PaymentProviderDLocal(models.Model):
 
     def process_payment(self, values):
         """ Process payment with dLocal API """
+        _logger.info("Javi 2")
         credentials = self.get_api_credentials()
         if not credentials['dlocal_api_key']:
             raise ValueError("Missing dLocal API Key in system parameters.")
@@ -44,27 +83,34 @@ class PaymentProviderDLocal(models.Model):
         if missing_fields:
             raise ValueError(f"Missing required fields for payment: {', '.join(missing_fields)}")
 
+        # Headers de la solicitud
+        headers = {
+            "content-type": "application/json",
+            "Authorization": f"Bearer {credentials['dlocal_api_key']}:{credentials['dlocal_secret_key']}"
+        }
+                
+        url = "https://api-sbx.dlocalgo.com/v1/payments"
+        
         # Preparar datos de la solicitud
         data = {
             "amount": values['amount'],
             "currency": values['currency'],
             "order_id": values['reference'],
+            "country": "UY",
+            "description": f"Order {values['reference']} - example.com",
             "payment_method": "CARD",
             "payer": {
                 "email": values['partner_email'],
                 "name": values['partner_name']
             }
         }
-
-        # Cabeceras de la solicitud
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {credentials['dlocal_api_key']}"
-        }
+        
+        _logger.info(f"Data: {data}")
 
         try:
-            # Realizar solicitud de pago
-            response = requests.post(f"{self.dlocal_endpoint}/payments", headers=headers, json=data)
+            #requests.headers = {'Content-type': 'application/json'}
+            response = requests.post(url, headers=headers, json=data)
+            _logger.error(f"Error response: {response.text}")
             response.raise_for_status()  # Lanza un error en caso de respuesta HTTP 4xx o 5xx
             return response.json()
         except requests.exceptions.RequestException as e:
@@ -114,25 +160,22 @@ class PaymentTransactionDLocal(models.Model):
 
         # No se si acá no hay que cambiar para que no sea localhost, probarlo.
         #base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
-        base_url = 'https://ffa8-190-64-48-74.ngrok-free.app'
+        base_url = 'https://e8b0-2800-ac-8014-f673-f9b9-fe43-75fc-1a61.ngrok-free.app'
 
-        # Redirect a Dlocal
         tx_values = {
-            'x_login': self.provider_id.x_dlocal_api_key,
-            'x_amount': processing_values['amount'],
-            'x_currency': self.currency_id.name,
-            'x_reference': self.reference,
-            'x_country': self.partner_country_id.code,
-            'x_email': self.partner_email,
-            'x_name': self.partner_name,
-            # URLs de retorno y notificación
-            'x_return_url': urls.url_join(base_url, '/payment/dlocal/return'),
-            'x_notify_url': urls.url_join(base_url, '/payment/dlocal/webhook'),
+            'currency': self.currency_id.name,
+            'amount': processing_values['amount'],
+            'country': self.partner_country_id.code,
+            'order_id': self.reference,
+            'description': self.reference + ' - ' + self.partner_name,
+            'success_url': urls.url_join(base_url, '/payment/dlocal/success'),
+            'back_url': urls.url_join(base_url, '/payment/dlocal/return'),
+            'notification_url': urls.url_join(base_url, '/payment/dlocal/notifications'),
         }
 
-        # Firmamos
-        msg = f"{tx_values['x_login']}{tx_values['x_amount']}{tx_values['x_reference']}"
-        tx_values['x_signature'] = hmac.new(
+        #Firmamos
+        msg = f"{self.provider_id.x_dlocal_secret_key}{tx_values['amount']}{tx_values['order_id']}"
+        tx_values['signature'] = hmac.new(
             self.provider_id.x_dlocal_secret_key.encode('utf-8'),
             msg.encode('utf-8'),
             hashlib.sha256
@@ -140,7 +183,8 @@ class PaymentTransactionDLocal(models.Model):
 
 
         api_url = f"{self.provider_id.x_dlocal_endpoint}/v1/payments"
-
+        #api_url = "https://api-sbx.dlocalgo.com/v1/payments"
+    
         return {
             'api_url': api_url,
             'tx_values': tx_values,

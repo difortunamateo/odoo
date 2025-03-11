@@ -10,7 +10,7 @@
     <field name="code">dlocal</field>
     <field name="redirect_form_view_id" ref="redirect_form"/>
     <field name="company_id" ref="base.main_company"/>
-    <field name="state">disabled</field>
+    <field name="state">enabled</field>
     <!-- etc. -->
 </record>
 </odoo>

@@ -14,15 +14,17 @@ class DLocalController(http.Controller):
         # Obtener la transacción basada en el ID de referencia
         tx_id = post.get('tx_id')
         tx = request.env['payment.transaction'].sudo().browse(int(tx_id))
-
+        
         if not tx or tx.provider_code != 'dlocal':
             return request.redirect('/shop/payment')
-
+        
         rendering_values = tx._get_specific_rendering_values({
             'amount': tx.amount,
             'currency_code': tx.currency_id.name,
             'reference': tx.reference,
         })
+        
+        _logger.info("Rendering values javi:", rendering_values)
 
         return request.render(
             'payment_dlocal.redirect_form', rendering_values
