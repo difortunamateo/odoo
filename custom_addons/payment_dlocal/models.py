@@ -84,9 +84,10 @@ class PaymentProviderDLocal(models.Model):
             raise ValueError(f"Missing required fields for payment: {', '.join(missing_fields)}")
 
         # Headers de la solicitud
+        auth_token = f"Bearer {credentials['dlocal_api_key']}:{credentials['dlocal_secret_key']}".strip()
         headers = {
-            "content-type": "application/json",
-            "Authorization": f"Bearer {credentials['dlocal_api_key']}:{credentials['dlocal_secret_key']}"
+            "Content-Type": "application/json",
+            "Authorization": auth_token
         }
                 
         url = "https://api-sbx.dlocalgo.com/v1/payments"
